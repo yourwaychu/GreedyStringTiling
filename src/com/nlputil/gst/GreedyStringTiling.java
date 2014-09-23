@@ -168,10 +168,10 @@ public class GreedyStringTiling {
 			}
 
 			int dist;
-			if (distToNextTile(t, T) instanceof Integer)
-				dist = (int) distToNextTile(t, T);
+			Integer d = distToNextTile(t, T);
+			if (d != null)
+				dist = d.intValue();
 			else {
-				dist = 0;
 				dist = T.length - t;
 				noNextTile = true;
 			}
@@ -182,10 +182,7 @@ public class GreedyStringTiling {
 				if (noNextTile)
 					t = T.length;
 				else {
-					if (jumpToNextUnmarkedTokenAfterTile(t, T) instanceof Integer)
-						t = (int) jumpToNextUnmarkedTokenAfterTile(t, T);
-					else
-						t = T.length;
+					t = jumpToNextUnmarkedTokenAfterTile(t, dist, T);
 				}
 			} else {
 				StringBuilder sb = new StringBuilder();
@@ -218,11 +215,10 @@ public class GreedyStringTiling {
 			}
 
 			int dist;
-
-			if (distToNextTile(p, P) instanceof Integer) {
-				dist = (int) distToNextTile(p, P);
-			} else {
-				dist = 0;
+			Integer d = distToNextTile(p, P);
+			if (d != null)
+				dist = d.intValue();
+			else {
 				dist = P.length - p;
 				noNextTile = true;
 			}
@@ -231,13 +227,7 @@ public class GreedyStringTiling {
 				if (noNextTile)
 					p = P.length;
 				else {
-
-					if (jumpToNextUnmarkedTokenAfterTile(p, P) instanceof Integer)
-						p = (int) jumpToNextUnmarkedTokenAfterTile(p, P);
-					else {
-						p = 0;
-						p = P.length;
-					}
+					p = jumpToNextUnmarkedTokenAfterTile(p, dist, P);
 				}
 			} else {
 				StringBuilder sb = new StringBuilder();
@@ -384,7 +374,7 @@ public class GreedyStringTiling {
 	 * @param p2
 	 * @return distance to next tile
 	 */
-	private static Object distToNextTile(int pos, String[] stringList) {
+	private static Integer distToNextTile(int pos, String[] stringList) {
 		if (pos == stringList.length)
 			return null;
 		int dist = 0;
@@ -407,17 +397,13 @@ public class GreedyStringTiling {
 	 * @param stringList
 	 * @return the position to jump to the next unmarked token after tile
 	 */
-	private static Object jumpToNextUnmarkedTokenAfterTile(int pos,
+	private static int jumpToNextUnmarkedTokenAfterTile(int pos, int dist,
 			String[] stringList) {
-		Object dist = distToNextTile(pos, stringList);
-		if (dist instanceof Integer)
-			pos = pos + (int) dist;
-		else
-			return null;
+		pos = pos + dist;
+		if (pos > stringList.length - 1)
+			return pos;
 		while (pos + 1 < stringList.length && (isMarked(stringList[pos + 1])))
 			pos = pos + 1;
-		if (pos + 1 > stringList.length - 1)
-			return null;
 		return pos + 1;
 	}
 
@@ -484,10 +470,11 @@ public class GreedyStringTiling {
 		// "Hash table entries has Arun name is here, Arun name is here with Hash table entries Arun how is arun Arun name is here with Hash table entries",
 		// 2, (float) 0.5);
 
-		// run("易寶宏是歌仔戲花旦易淑寬的兒子，易淑寬透過管道喊冤，對兒子捲入殺警案表示難以置信。檢警查出，易寶宏手段殘暴，但他在羈押庭中否認殺人，還向法官說，「我媽媽是藝人，你們絕對不可以押我。」",
-		// "易寶宏是歌仔戲花旦易淑寬的兒子，，對兒子捲入殺警案表示難以置信。檢警查出，易寶宏手段殘暴，但他在羈押庭中否認殺人，還向法官說，「我媽媽是藝人，你們絕對不可以押我。」",
-		// 2, (float) 0.5);
-
+		String a = "1234";
+		String[] v = a.split("");
+		for (String s : v) {
+			System.out.println(s);
+		}
 		if (args.length != 3) {
 			System.err
 					.println("Wrong Format!! Usage: java -jar RKR_GST.jar filePath1 filePath2 minMatchLength");
@@ -497,5 +484,6 @@ public class GreedyStringTiling {
 		String s2 = readFile(args[1]);
 		int mML = Integer.valueOf(args[2]);
 		showSortedTiles(s1, s2, mML);
+
 	}
 }

@@ -275,16 +275,18 @@ public class GreedyStringTiling {
 	}
 
 	private static void markStrings(int s, String[] P, String[] T) {
+		ArrayList<MatchVals> sibling_tiles = new ArrayList<MatchVals>();
 		for (Queue<MatchVals> queue : matchList) {
 			while (!queue.isEmpty()) {
 				MatchVals match = queue.poll();
-				if (!isOccluded(match, tiles)) {
+				if (!isOccluded(match, sibling_tiles)) {
 					for (int j = 0; j < match.length; j++) {
 						P[match.patternPostion + j] = markToken(P[match.patternPostion
 								+ j]);
 						T[match.textPosition + j] = markToken(T[match.textPosition
 								+ j]);
 					}
+					sibling_tiles.add(match);
 					tiles.add(match);
 				}
 			}

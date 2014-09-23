@@ -470,11 +470,6 @@ public class GreedyStringTiling {
 		// "Hash table entries has Arun name is here, Arun name is here with Hash table entries Arun how is arun Arun name is here with Hash table entries",
 		// 2, (float) 0.5);
 
-		String a = "1234";
-		String[] v = a.split("");
-		for (String s : v) {
-			System.out.println(s);
-		}
 		if (args.length != 3) {
 			System.err
 					.println("Wrong Format!! Usage: java -jar RKR_GST.jar filePath1 filePath2 minMatchLength");

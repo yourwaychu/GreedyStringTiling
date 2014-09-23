@@ -14,6 +14,8 @@ public class GreedyStringTiling {
 
 	public static ArrayList<MatchVals> tiles = new ArrayList<MatchVals>();
 	public static ArrayList<Queue<MatchVals>> matchList = new ArrayList<Queue<MatchVals>>();
+	public static boolean[] markListP;
+	public static boolean[] markListT;
 
 	/**
 	 * This method runs a comparison on the two given strings s1 and s2
@@ -67,7 +69,7 @@ public class GreedyStringTiling {
 		System.out.println("Similarity: " + result.getSimilarity());
 		System.out.print("Plagiriasm tiles: ");
 		for (MatchVals tiles : result.getTiles()) {
-			System.out.print("(" + tiles.patternPostion + ",");
+			System.out.print("(" + tiles.patternPosition + ",");
 			System.out.print(tiles.textPosition + ",");
 			System.out.print(tiles.length + ")");
 		}
@@ -101,6 +103,10 @@ public class GreedyStringTiling {
 	 */
 	public static ArrayList<MatchVals> RKR_GST(String P, String T,
 			int minimalMatchingLength, int initsearchSize) {
+		// Reset parameters
+		tiles = new ArrayList<MatchVals>();
+		matchList = new ArrayList<Queue<MatchVals>>();
+
 		if (minimalMatchingLength < 1)
 			minimalMatchingLength = 3;
 
@@ -110,8 +116,17 @@ public class GreedyStringTiling {
 		int s = 0;
 		// String[] PList = P.split("[\\s+|\\W+]");
 		// String[] TList = T.split("[\\s+|\\W+]");
-		String[] PList = P.split("");
-		String[] TList = T.split("");
+		String[] PatternTempList = P.split("");
+		String[] TextTempList = T.split("");
+
+		// Remove the first empty element
+		String[] PList = Arrays.copyOfRange(PatternTempList, 1,
+				PatternTempList.length);
+		String[] TList = Arrays.copyOfRange(TextTempList, 1,
+				TextTempList.length);
+
+		markListP = new boolean[PList.length];
+		markListT = new boolean[TList.length];
 
 		s = initsearchSize;
 		boolean stop = false;
@@ -162,13 +177,13 @@ public class GreedyStringTiling {
 		boolean noNextTile = false;
 		int h;
 		while (t < T.length) {
-			if (isMarked(T[t])) {
+			if (isMarked(t, false)) {
 				t = t + 1;
 				continue;
 			}
 
 			int dist;
-			Integer d = distToNextTile(t, T);
+			Integer d = distToNextTile(t, T, false);
 			if (d != null)
 				dist = d.intValue();
 			else {
@@ -182,7 +197,7 @@ public class GreedyStringTiling {
 				if (noNextTile)
 					t = T.length;
 				else {
-					t = jumpToNextUnmarkedTokenAfterTile(t, dist, T);
+					t = jumpToNextUnmarkedTokenAfterTile(t, dist, T, false);
 				}
 			} else {
 				StringBuilder sb = new StringBuilder();
@@ -209,13 +224,13 @@ public class GreedyStringTiling {
 		noNextTile = false;
 		int p = 0;
 		while (p < P.length) {
-			if (isMarked(P[p])) {
+			if (isMarked(p, true)) {
 				p = p + 1;
 				continue;
 			}
 
 			int dist;
-			Integer d = distToNextTile(p, P);
+			Integer d = distToNextTile(p, P, true);
 			if (d != null)
 				dist = d.intValue();
 			else {
@@ -227,7 +242,7 @@ public class GreedyStringTiling {
 				if (noNextTile)
 					p = P.length;
 				else {
-					p = jumpToNextUnmarkedTokenAfterTile(p, dist, P);
+					p = jumpToNextUnmarkedTokenAfterTile(p, dist, P, true);
 				}
 			} else {
 				StringBuilder sb = new StringBuilder();
@@ -249,8 +264,8 @@ public class GreedyStringTiling {
 
 							while (p + k < P.length && t + k < T.length
 									&& P[p + k].equals(T[t + k])
-									&& isUnmarked(P[p + k])
-									&& isUnmarked(T[t + k]))
+									&& isUnmarked(p + k, true)
+									&& isUnmarked(t + k, false))
 								k = k + 1;
 
 							if (k > 2 * s)
@@ -281,10 +296,14 @@ public class GreedyStringTiling {
 				MatchVals match = queue.poll();
 				if (!isOccluded(match, sibling_tiles)) {
 					for (int j = 0; j < match.length; j++) {
-						P[match.patternPostion + j] = markToken(P[match.patternPostion
-								+ j]);
-						T[match.textPosition + j] = markToken(T[match.textPosition
-								+ j]);
+						markToken(match.patternPosition + j, true);
+						markToken(match.textPosition + j, false);
+						// P[match.patternPostion + j] =
+						// markToken(P[match.patternPostion
+						// + j]);
+						// T[match.textPosition + j] =
+						// markToken(T[match.textPosition
+						// + j]);
 					}
 					sibling_tiles.add(match);
 					tiles.add(match);
@@ -334,6 +353,30 @@ public class GreedyStringTiling {
 		return sb.toString();
 	}
 
+	private static boolean isUnmarked(int pos, boolean isPattern) {
+		if (isPattern) {
+			return markListP[pos] != true ? true : false;
+		} else {
+			return markListT[pos] != true ? true : false;
+		}
+	}
+
+	private static boolean isMarked(int pos, boolean isPattern) {
+		if (isPattern) {
+			return markListP[pos] == true ? true : false;
+		} else {
+			return markListT[pos] == true ? true : false;
+		}
+	}
+
+	private static void markToken(int pos, boolean isPattern) {
+		if (isPattern) {
+			markListP[pos] = true;
+		} else { // isText
+			markListT[pos] = true;
+		}
+	}
+
 	/**
 	 * Returns true if the match is already occluded by another match in the
 	 * tiles list.
@@ -355,7 +398,7 @@ public class GreedyStringTiling {
 		if (tiles.equals(null) || tiles == null || tiles.size() == 0)
 			return false;
 		for (MatchVals matches : tiles) {
-			if ((matches.patternPostion + matches.length == match.patternPostion
+			if ((matches.patternPosition + matches.length == match.patternPosition
 					+ match.length)
 					&& (matches.textPosition + matches.length == match.textPosition
 							+ match.length))
@@ -388,6 +431,19 @@ public class GreedyStringTiling {
 		return dist + 1;
 	}
 
+	private static Integer distToNextTile(int pos, String[] stringList,
+			boolean isPattern) {
+		if (pos == stringList.length)
+			return null;
+		int dist = 0;
+		while (pos + dist + 1 < stringList.length
+				&& isUnmarked(pos + dist + 1, isPattern))
+			dist += 1;
+		if (pos + dist + 1 == stringList.length)
+			return null;
+		return dist + 1;
+	}
+
 	/**
 	 * Returns the first postion of an unmarked token after the next tile.
 	 * 
@@ -405,6 +461,16 @@ public class GreedyStringTiling {
 		if (pos > stringList.length - 1)
 			return pos;
 		while (pos + 1 < stringList.length && (isMarked(stringList[pos + 1])))
+			pos = pos + 1;
+		return pos + 1;
+	}
+
+	private static int jumpToNextUnmarkedTokenAfterTile(int pos, int dist,
+			String[] stringList, boolean isPattern) {
+		pos = pos + dist;
+		if (pos > stringList.length - 1)
+			return pos;
+		while (pos + 1 < stringList.length && (isMarked(pos + 1, isPattern)))
 			pos = pos + 1;
 		return pos + 1;
 	}
@@ -437,8 +503,8 @@ public class GreedyStringTiling {
 		// Show Tiles
 		System.out.print("Tiles: \n");
 		for (MatchVals tile : tiles) {
-			String pattern = s1.substring(tile.patternPostion - 1,
-					tile.patternPostion + tile.length - 1);
+			String pattern = s1.substring(tile.patternPosition,
+					tile.patternPosition + tile.length);
 			System.out.println(pattern);
 		}
 	}
@@ -471,6 +537,11 @@ public class GreedyStringTiling {
 		// run("with Hash table entries Hash table entries has Arun name is here, Arun name is here with Hash table entries Arun how is arun",
 		// "Hash table entries has Arun name is here, Arun name is here with Hash table entries Arun how is arun Arun name is here with Hash table entries",
 		// 2, (float) 0.5);
+
+		// showSortedTiles(
+		// "易寶宏是歌仔戲花旦易淑寬的兒子，易淑寬透過管道喊冤，對兒子捲入殺警案表示難以置信。檢警查出，易寶宏手段殘暴，但他在羈押庭中否認殺人，還向法官說，「我媽媽是藝人，你們絕對不可以押我。」",
+		// "易寶宏是歌仔戲花旦易淑寬的兒子，，對兒子捲入殺警案表示難以置信。檢警查出，易寶宏手段殘暴，但他在羈押庭中否認殺人，還向法官說，「我媽媽是藝人，你們絕對不可以押我。」",
+		// 2);
 
 		if (args.length != 3) {
 			System.err

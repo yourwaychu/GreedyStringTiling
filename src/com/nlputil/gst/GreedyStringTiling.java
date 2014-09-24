@@ -551,7 +551,13 @@ public class GreedyStringTiling {
 		String s1 = readFile(args[0]);
 		String s2 = readFile(args[1]);
 		int mML = Integer.valueOf(args[2]);
+
+		long startTime = System.currentTimeMillis();
+
 		showSortedTiles(s1, s2, mML);
 
+		long endTime = System.currentTimeMillis();
+		System.out.println("That took " + (endTime - startTime)
+				+ " milliseconds");
 	}
 }
